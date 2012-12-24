@@ -8,6 +8,7 @@
  */
 
 #include "tAgent.h"
+#include "globalConst.h"
 
 tAgent::tAgent(){
 	int i;
@@ -20,6 +21,9 @@ tAgent::tAgent(){
 	}
 	hmmus.clear();
 	food=0;
+    born=0;
+    dormancyPeriod = randDouble * 20.0;
+    offspring = 0;
 }
 
 tAgent::~tAgent(){
@@ -41,6 +45,7 @@ void tAgent::setupRandomAgent(int nucleotides){
 	ampUpStartCodons();
 	setupPhenotype();
 }
+
 void tAgent::loadAgent(char* filename){
 	FILE *f=fopen(filename,"r+t");
 	int i;
@@ -83,17 +88,25 @@ void tAgent::inherit(tAgent *from,double mutationRate,int theTime){
     int nucleotides;
  	vector<unsigned char> buffer;
  	born=theTime;
+    dormancyPeriod = from->dormancyPeriod;
+    
+    if (randDouble < 0.05)
+    {
+        dormancyPeriod += (int)(randDouble * 20.0) - 10;
+        dormancyPeriod = max(dormancyPeriod, 0);
+    }
+    
 	ancestor=from;
 	from->nrPointingAtMe++;
     nucleotides=(int)from->genome.size();
 	genome.clear();
 	genome.resize(nucleotides);
     for(i=0;i<nucleotides;i++)
-        if(((double)rand()/(double)RAND_MAX)<mutationRate)
+        if(randDouble<mutationRate)
             genome[i]=rand()&255;
         else
             genome[i]=from->genome[i];
-	if((((double)rand()/(double)RAND_MAX)<0.05)&&(genome.size()<20000)){
+	if((randDouble<0.05)&&(genome.size()<20000)){
 		//duplication
 		w=15+rand()&511;
 		s=rand()%((int)genome.size()-w);
@@ -102,7 +115,7 @@ void tAgent::inherit(tAgent *from,double mutationRate,int theTime){
 		buffer.insert(buffer.begin(),genome.begin()+s,genome.begin()+s+w);
 		genome.insert(genome.begin()+o,buffer.begin(),buffer.end());
 	}
-	if((((double)rand()/(double)RAND_MAX)<0.02)&&(genome.size()>1000)){
+	if((randDouble<0.02)&&(genome.size()>1000)){
 		//deletion
 		w=15+rand()&511;
 		s=rand()%((int)genome.size()-w);
@@ -112,7 +125,7 @@ void tAgent::inherit(tAgent *from,double mutationRate,int theTime){
 	fitness=0.0;
 }
 void tAgent::setupPhenotype(void){
-	int i,j;
+	int i;
 	if(hmmus.size()!=0)
 		for(i=0;i<hmmus.size();i++)
 			delete hmmus[i];

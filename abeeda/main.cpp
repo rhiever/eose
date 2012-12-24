@@ -11,13 +11,11 @@
 #include "tHMM.h"
 #include "tAgent.h"
 
-#define randDouble ((double)rand()/(double)RAND_MAX)
-
 using namespace std;
 
 //double replacementRate=0.1;
 double perSiteMutationRate=0.005;
-int update=0;
+int update=1;
 int repeats=1;
 int maxAgent=1000;
 int totalGenerations=100;
@@ -63,48 +61,54 @@ int main(int argc, char *argv[])
     tAgent* who[xDim][yDim];
     unsigned char area[xDim][yDim];
 	tAgent *masterAgent;
-	int i,j,k,x,y,action;
-	double maxFitness;
-	int newBorn=0;
-	FILE *resFile;
+	int i,j,x,y,action, numFood = 0;
+	double deathAtBirthRate = 0.0;
+    
+	/*FILE *resFile;
 	FILE *LOD;
 	FILE *genomeFile;
-    FILE *F,*G,*R;
+    FILE *F,*G,*R;*/
     srand(getpid());
-    cout<<"attempt socked connection"<<endl;
-    setupBroadcast();
-    cout<<"attempt complete"<<endl;
+    //cout<<"attempt socked connection"<<endl;
+    //setupBroadcast();
+    //cout<<"attempt complete"<<endl;
 	srand(getpid());
     //setup area and all
     agent.clear();
-    for (i=0; i<xDim; i++) {
-        for(j=0;j<yDim;j++){
+    for (i=0; i<xDim; i++)
+    {
+        for(j=0;j<yDim;j++)
+        {
             area[i][j]=_empty;
             who[i][j]=NULL;
             if(randDouble<0.01)
                 area[i][j]=_wall;
             else
-                if(randDouble<0.1)
+                if(randDouble<0.8)
                     area[i][j]=_food;
+            
             if((i==0)||(j==0)||(i==xDim-1)||(j==yDim-1))
                 area[i][j]=_wall;
         }
     }
 	agent.resize(maxAgent);
 	masterAgent=new tAgent;
-//	masterAgent->setupRandomAgent(5000);
+	//masterAgent->setupRandomAgent(5000);
     masterAgent->loadAgent((char*)"startGenome.txt");
 	masterAgent->setupPhenotype();
-    masterAgent->showPhenotype();
+    //masterAgent->showPhenotype();
     //exit(0);
 //    masterAgent->saveGenome(genomeFile);
 //    fclose(genomeFile);
-	for(i=0;i<agent.size();i++){
+	for(i=0;i<agent.size();i++)
+    {
 		agent[i]=new tAgent;
 		agent[i]->inherit(masterAgent,0.01,0);
-        do{
+        do
+        {
             agent[i]->xPos=rand()%xDim;
             agent[i]->yPos=rand()%yDim;
+            
         } while(area[agent[i]->xPos][agent[i]->yPos]!=_empty);
         agent[i]->direction=rand()&3;
         area[agent[i]->xPos][agent[i]->yPos]=_agent;
@@ -113,38 +117,47 @@ int main(int argc, char *argv[])
 	}
 	masterAgent->nrPointingAtMe--;
 	cout<<"setup complete"<<endl;
-    while(agent.size()>0)
+    while(agent.size()>0 || birth.size()>0)
     //while(update<5000)    
     {
         update++;
         i=0;
-        birth.clear();
-        while(i<agent.size()){
-            if(randDouble<0.001){
-                //death of an agent
+        //birth.clear();
+        
+        double avgDormancyPeriod = 0.0;
+        
+        while(i<agent.size())
+        {
+            
+            avgDormancyPeriod += agent[i]->dormancyPeriod;
+            
+            //death of an agent
+            if (update - agent[i]->born > 100)
+            //if (randDouble<0.001)
+            {
                 who[agent[i]->xPos][agent[i]->yPos]=NULL;
-                area[agent[i]->xPos][agent[i]->yPos]=_empty;
+                area[agent[i]->xPos][agent[i]->yPos]=_food;//_empty;
                 agent[i]->nrPointingAtMe--;
                 if(agent[i]->nrPointingAtMe==0)
                     delete agent[i];
+                
                 agent.erase(agent.begin()+i);
             }
-            else{
+            else
+            {
                 //do agent
                 //make inputs
-                //for(j=0;j<4;j++)
-                {
-                    area[agent[i]->xPos][agent[i]->yPos]=_empty;
-                    who[agent[i]->xPos][agent[i]->yPos]=NULL;
-                    agent[i]->states[0]=agent[i]->direction&1;
-                    agent[i]->states[1]=(agent[i]->direction>>1)&1;
-                    
-                    agent[i]->states[2]=(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]])&1;
-                    agent[i]->states[3]=(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]]>>1)&1;
-                    agent[i]->states[4]=(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]]>>2)&1;
-                    //update states
-                    agent[i]->updateStates();
-                }
+                area[agent[i]->xPos][agent[i]->yPos]=_food;//_empty;
+                who[agent[i]->xPos][agent[i]->yPos]=NULL;
+                agent[i]->states[0]=agent[i]->direction&1;
+                agent[i]->states[1]=(agent[i]->direction>>1)&1;
+                
+                agent[i]->states[2]=(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]])&1;
+                agent[i]->states[3]=(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]]>>1)&1;
+                agent[i]->states[4]=(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]]>>2)&1;
+                //update states
+                agent[i]->updateStates();
+                
                 //evaluate actions
                 action=((agent[i]->states[5]&1)<<2)+((agent[i]->states[6]&1)<<1)+(agent[i]->states[7]&1);
                 //action=rand()&3;
@@ -157,17 +170,20 @@ int main(int argc, char *argv[])
                     case 2: // turn right
                         agent[i]->direction=(agent[i]->direction-1)&3;
                         break;
-                    case 3: //more forward
-                        switch(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]]){
+                    case 3: //move forward
+                        switch(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]])
+                        {
                             case _food:
                                 agent[i]->food++;
-                                if(agent[i]->food>=5){
+                                if(agent[i]->food >= 1)
+                                {
                                     tAgent *offspring=new tAgent();
                                     offspring->inherit(agent[i], 0.01, update);
                                     offspring->xPos=agent[i]->xPos;
                                     offspring->yPos=agent[i]->yPos;
                                     offspring->direction=rand()&3;
                                     agent[i]->food=0;
+                                    agent[i]->offspring++;
                                     birth.push_back(offspring);
                                     area[offspring->xPos][offspring->yPos]=_agent;
                                     who[offspring->xPos][offspring->yPos]=offspring;
@@ -186,16 +202,55 @@ int main(int argc, char *argv[])
                 i++;
             }
         }
+        
         //add newborns to population
-        agent.insert(agent.end(), birth.begin(), birth.end());
+        if (update % 10 == 0)
+        {
+            deathAtBirthRate = 0.0;
+        }
+        
+        if (update % 25 == 0)
+        {
+            deathAtBirthRate = 1.0;
+        }
+        
+        for (int newbornIndex = 0; newbornIndex < birth.size(); ++newbornIndex)
+        {
+            if (update > birth[newbornIndex]->born + birth[newbornIndex]->dormancyPeriod)
+            {
+                if (randDouble > deathAtBirthRate)
+                {
+                    agent.insert(agent.end(), birth[newbornIndex]);
+                }
+                
+                birth.erase(birth.begin() + newbornIndex);
+            }
+        }
+        
+        //agent.insert(agent.end(), birth.begin(), birth.end());
         //add food
-        for(i=0;i<10;i++){
+        /*if (update % 50 == 0)
+        {
+            if (numFood == 10)
+            {
+                numFood = 0;
+            }
+            else
+            {
+                numFood = 10;
+            }
+        }*/
+        
+        for(i=0; i<numFood; ++i)
+        {
             x=2+(rand()%(xDim-4));
+            
             y=2+(rand()%(yDim-4));
+            
             if(area[x][y]==_empty)
                 area[x][y]=_food;
         }
-        //*
+        /*
         if((update&15)==0){
             //doBroadcast("a c string");
             string S;
@@ -212,16 +267,20 @@ int main(int argc, char *argv[])
                     }
             doBroadcast(S);
         }
-         //*/
-        if((update&127)==0){
-            cout<<update<<" "<<(int)agent.size()<<endl;
+        //*/
+        
+        avgDormancyPeriod /= (double)agent.size();
+        
+        if((update%250)==0)
+        {
+            cout<<update<<" "<<(int)agent.size()<<" "<<avgDormancyPeriod<<endl;
         }
     }
     /*
     F=fopen("startGenome.txt","w+t");
     agent[0]->saveGenome(F);
     fclose(F);
-     */
+    */
     return 0;
 }
 

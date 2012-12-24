@@ -42,7 +42,8 @@ public:
 	int food;
 	int xPos,yPos,direction;
 	int ID;
-	int born;
+	int born, offspring;
+    int dormancyPeriod;
     unsigned char nodeMap[256];
     
 	tAgent();

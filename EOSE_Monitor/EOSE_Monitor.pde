@@ -21,9 +21,6 @@ PFont f;
 
 int frame=0;//1000000;
 
-boolean showLegend = true;
-
-
 void drawArea(){
   //noStroke();
   //int R=128,G=128,B=128;
@@ -31,26 +28,6 @@ void drawArea(){
   {
     //if(currentStep==1)
      background(0);
-
-     if (showLegend && currentStep < 200)
-     {
-       fill(255, 0, 0);
-       text("Red - predator", 10, 40);
-      
-       fill(255, 255, 255);
-       text("White - prey", 10, 65);
-      
-       fill(0, 255, 0);
-       text("Green - center of swarm", 10, 90);
-      
-       //fill(30, 144, 255);
-       //text("Blue - prey visible to predator", 10, 115);
-     }
-     
-     if (showLegend && currentStep > 150)
-     {
-       showLegend = false;
-     }
      
      for(int t=0;t<1;t++)
      {
@@ -166,7 +143,7 @@ void setup()
   int mo = month();
   int y = year();
   
-  String movname = "swarm-" + y + "-" + mo + "-" + d + "-" + h + "-" + mi + "-" + s + ".mov";
+  String movname = "eose-" + y + "-" + mo + "-" + d + "-" + h + "-" + mi + "-" + s + ".mov";
   
   mm = new MovieMaker(this, width, height, movname, 30, MovieMaker.ANIMATION, MovieMaker.BEST);
   background(#000000);
