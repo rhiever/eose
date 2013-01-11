@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
     tAgent* who[xDim][yDim];
     unsigned char area[xDim][yDim];
 	tAgent *masterAgent;
-	int i,j,x,y,action, numFood = 0;
+	int i,j,x,y,action, numFood = 10;
 	double deathAtBirthRate = 0.0;
     
 	/*FILE *resFile;
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
     FILE *F,*G,*R;*/
     srand(getpid());
     //cout<<"attempt socked connection"<<endl;
-    //setupBroadcast();
+    setupBroadcast();
     //cout<<"attempt complete"<<endl;
 	srand(getpid());
     //setup area and all
@@ -82,13 +82,21 @@ int main(int argc, char *argv[])
             area[i][j]=_empty;
             who[i][j]=NULL;
             if(randDouble<0.01)
+            {
                 area[i][j]=_wall;
+            }
             else
+            {
                 if(randDouble<0.8)
+                {
                     area[i][j]=_food;
+                }
+            }
             
             if((i==0)||(j==0)||(i==xDim-1)||(j==yDim-1))
+            {
                 area[i][j]=_wall;
+            }
         }
     }
 	agent.resize(maxAgent);
@@ -136,7 +144,7 @@ int main(int argc, char *argv[])
             //if (randDouble<0.001)
             {
                 who[agent[i]->xPos][agent[i]->yPos]=NULL;
-                area[agent[i]->xPos][agent[i]->yPos]=_food;//_empty;
+                area[agent[i]->xPos][agent[i]->yPos]=_empty; //_food;
                 agent[i]->nrPointingAtMe--;
                 if(agent[i]->nrPointingAtMe==0)
                     delete agent[i];
@@ -147,7 +155,7 @@ int main(int argc, char *argv[])
             {
                 //do agent
                 //make inputs
-                area[agent[i]->xPos][agent[i]->yPos]=_food;//_empty;
+                area[agent[i]->xPos][agent[i]->yPos]=_empty; //_food;
                 who[agent[i]->xPos][agent[i]->yPos]=NULL;
                 agent[i]->states[0]=agent[i]->direction&1;
                 agent[i]->states[1]=(agent[i]->direction>>1)&1;
@@ -174,8 +182,10 @@ int main(int argc, char *argv[])
                         switch(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]])
                         {
                             case _food:
+                                
                                 agent[i]->food++;
-                                if(agent[i]->food >= 1)
+                                
+                                if(agent[i]->food >= 5)
                                 {
                                     tAgent *offspring=new tAgent();
                                     offspring->inherit(agent[i], 0.01, update);
@@ -188,10 +198,12 @@ int main(int argc, char *argv[])
                                     area[offspring->xPos][offspring->yPos]=_agent;
                                     who[offspring->xPos][offspring->yPos]=offspring;
                                 }
+                                
                             case _empty:
                                 agent[i]->xPos+=xm[agent[i]->direction];
                                 agent[i]->yPos+=ym[agent[i]->direction];
                             break;
+                                
                             default: //do nothing if not empty of food
                                 break;
                         }
@@ -203,15 +215,15 @@ int main(int argc, char *argv[])
             }
         }
         
-        //add newborns to population
-        if (update % 10 == 0)
+        // add newborns to population
+        if (update % 100 == 0)
         {
             deathAtBirthRate = 0.0;
         }
         
-        if (update % 25 == 0)
+        else if (update % 50 == 0)
         {
-            deathAtBirthRate = 1.0;
+            deathAtBirthRate = 0.5;
         }
         
         for (int newbornIndex = 0; newbornIndex < birth.size(); ++newbornIndex)
@@ -220,6 +232,7 @@ int main(int argc, char *argv[])
             {
                 if (randDouble > deathAtBirthRate)
                 {
+                    birth[newbornIndex]->born = update;
                     agent.insert(agent.end(), birth[newbornIndex]);
                 }
                 
@@ -241,7 +254,7 @@ int main(int argc, char *argv[])
             }
         }*/
         
-        for(i=0; i<numFood; ++i)
+        for (int i = 0; i < numFood; ++i)
         {
             x=2+(rand()%(xDim-4));
             
@@ -250,7 +263,7 @@ int main(int argc, char *argv[])
             if(area[x][y]==_empty)
                 area[x][y]=_food;
         }
-        /*
+        
         if((update&15)==0){
             //doBroadcast("a c string");
             string S;
@@ -267,7 +280,7 @@ int main(int argc, char *argv[])
                     }
             doBroadcast(S);
         }
-        //*/
+        
         
         avgDormancyPeriod /= (double)agent.size();
         
